@@ -1,0 +1,212 @@
+img, svg {
+    vertical-align: middle;
+    height: 20px;
+    width: 20px;
+    display: inherit;
+}
+
+nav {
+    margin-bottom: 20px;
+}
+
+.alert.alert-success {
+    display: flex !important;
+}
+
+.alert.alert-danger {
+    display: flex !important;
+}
+
+.alert.alert-info {
+    margin-top: 10px;
+    display: flex !important;
+}
+
+
+h1 {
+    background: currentColor;
+    padding-bottom: 80px;
+    padding-top: 10px;
+    margin-bottom: 60px;
+}
+
+.h1-header-user {
+    display: inline-flex;
+}
+
+#id-user {
+    text-align: end;
+}
+
+.header {
+    color: white;
+    padding-left: 20px;
+    font-style: oblique;
+    margin-top: 40px;
+}
+
+.thead-tabela-series-topo {
+    background: whitesmoke;
+}
+
+.img-tabela-series {
+    width: 22px;
+    height: 22px;
+}
+
+.thead-tabela-series-footer {
+    background: whitesmoke;
+}
+
+#th-coluna-acoes-tabela-series {
+    text-align: center;
+}
+
+#td-coluna-acoes-tabela-detalhes-series-season {
+    text-align: start;
+    padding-top: 10px;
+}
+
+#td-coluna-acoes-tabela-detalhes-episodes {
+    text-align: end;
+    padding-top: 10px;
+}
+
+#capa-seasons {
+    background: beige;
+    padding: 10px;
+}
+
+#td-coluna-acoes-tabela-series {
+    text-align: end;
+}
+
+#btn-destroy {
+    display: inline !important;
+}
+
+
+#btn-update {
+    display: inline !important;
+}
+
+#tabela-series_length {
+    text-align: start !important;
+    position: absolute;
+}
+
+#tabela-series_paginate {
+    text-align: end !important;
+    padding-top: 20px;
+}
+
+#tabela-series_filter {
+    text-align: end !important;
+    padding-bottom: 20px !important;
+}
+
+#tabela-series_next {
+    padding: 10px !important;
+    /* background: indianred !important; */
+    border-radius: 100%;
+    margin: 10px;
+    color: cornflowerblue;
+    text-transform: uppercase;
+    text-decoration: burlywood;
+    cursor: pointer;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
+#tabela-series_previous {
+    padding: 10px !important;
+    /* background: indianred !important; */
+    border-radius: 100%;
+    margin: 10px;
+    color: cornflowerblue;
+    text-transform: uppercase;
+    text-decoration: burlywood;
+    cursor: pointer;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
+
+.paginate_button.current {
+    color: white;
+    margin-left: 5px !important;
+    margin-right: 5px;
+    background: orange;
+    border-radius: 10%;
+}
+
+body
+{
+    margin-bottom: 100px;
+}
+
+#bg-tabela-series-episodes
+{
+    font-size: medium;
+}
+
+#checkbox-tabela-series-episodes {
+    min-width: 20px;
+    min-height: 20px;
+    margin-right: 5px;
+}
+
+.form-group {
+    padding-bottom: 10px;
+}
+
+select {
+    background-image: url(data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e);
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 1.5rem;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+    print-color-adjust: exact;
+}
+[type='search'], textarea, select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: #d30f0f00;
+    border-color: #d5d9e18a;
+    border-width: 1px;
+    padding-left: 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    border-radius: 10px;
+}
+
+#tabela-series_info {
+    position: absolute;
+    padding-top: 10px;
+}
+
+*, *::before, *::after {
+    /* box-sizing: border-box; */
+    padding-left: 2px;
+}
+
+a {
+    color: var(--bs-link-color);
+    text-decoration: underline;
+    padding: 5px;
+}
+
+.col-auto {
+    padding-top: 30px;
+}
+
+#img-capa-serie {
+    width: 350px;
+    height: 250px;
+}
+
+#img-capa-season {
+    width: 55px;
+    height: 40px;
+}

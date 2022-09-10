@@ -1,0 +1,745 @@
+TOP 01
+
+o propósito de termos uma API, porque iríamos querer. Nós criamos um sistema para gerenciar as séries, quais episódios já assistimos e etc.
+temos aqui esse sistema web, feito de uma forma, com um layout, com um visual, 
+Só que imagine que eu queira criar um aplicativo móvel - e eu tenho um aplicativo para Android, tenho um aplicativo para iPhone - que queria 
+refazer esse visual criando, por exemplo, com o Angular, com uma SPA (Single Page Application).
+ntão eu terei vários aplicativos diferentes que terão todas as mesmas regras. Imagine se no meu aplicativo para Android, para iPhone, nessa minha SPA,
+se eu precisasse me conectar diretamente com o banco de dados e fazer todas as manipulações, toda aquela regra de criar as temporadas e o número de episódios por temporadas, 
+enviar e-mail para notificar o usuário e etc.
+
+então imagine se tiver que repetir todo esse processo para cada cliente que for criar. Para evitarmos esse tipo de situação, nós vamos criar um intermediário entre os nossos dados, 
+e nossas regras de negócio, e o nosso cliente, ou seja, a visualização do sistema. O que teremos no final é basicamente um desenho assim.
+
+o que nós temos é somente essa aplicação aqui num framwwork fullstack, vamos dizer assim, uma aplicação web completa. 
+então teremos que transforma essa aplicação comleta em uma API. 
+Com isso, pode criar no front com uma aplicação em Angular, em React, você pode criar uma aplicação no desktop para o seu sistema operacional, você pode criar um aplicativo para celular, 
+isso tudo separado no código.
+
+Então não importa qual tecnologia você vai utilizar para consumir a API. Mas, neste treinamento, vamos criar a API utilizando o Laravel
+
+-
+
+vamos criar o primeiro endpoint. Simplificando, um endpoint, quando estamos falando de API, é basicamente uma URL, um ponto onde conseguimos acessar a API,
+ou abrir o projeto, repare que ele já está rodando. Nesse projeto, nós temos definidas as rotas dentro de "routes > web.php". Vamos criar uma rota nova, um Route::get(). 
+Ao invés de ser /series, vou chamar de (url:'3/api/series', ). Aqui, por enquanto, terei somente uma função mesmo, (url:'3/api/series', function () {});. 
+O que essa função vai retornar?
+Laravel vai tentar converter isso da melhor forma e nos responder da melhor forma. Então, se eu tenho, por exemplo, o nome de uma série, return [ 'Grey´s Anatomy'];.
+
+exemplo:
+Route::get('/api/series', function () {
+    return [
+        'Grey\'s Anatomy'
+    ];
+});
+
+clicando com o botão direito no mouse e escolhendo a opção "Inspecionar", e quando eu atualizar, em "series", quando vamos na aba "Cabeçalhos", em "Cabeçalhos de resposta", o 
+"Content-type" é JSON.
+
+Ou seja, ele está nos retornando em um formato conhecido como JSON. Quando falamos de API, esse é um formato muito comum e muito utilizado. 
+nós falamos um pouco sobre web service API no geral, comentamos sobre responder com XML, com JSON. Então neste treinamento vamos utilizar JSON como 
+formato para transferência de dados da nossa API.
+
+**  Porque se eu devolvo - imagine que eu estou criando um aplicativo, esse aplicativo acessa a minha API e devolvo para ele aquela página HTML. Esse aplicativo terá muito trabalho
+para ler esse HTML, fazer o parse, fazer a leitura, o processamento desse HTML, para pegar somente as informações necessárias.
+e eu devolvo em um formato como JSON, a facilidade é muito grande, é muito mais tranquilo para o cliente dessa API, parsear, fazer o processamento desses dados e tratá-los como 
+eles preferirem. Continuando, também comentei que se eu retorno alguma model ou uma collection do Eloquent, o próprio Laravel já sabe como devolver isso também.
+
+exemplo:
+Route::get('/api/series', function () {
+    return Series::all();
+});
+
+Então se eu quero buscar todas as séries, eu posso simplesmente devolver o resultado de return \App\Models\Series::all();. 
+Com isso teremos um JSON já formatado com todas as informações de uma série.
+
+OBSERVAÇÃO:
+não é comum termos em uma aplicação, em um mesmo sistema, um projeto como esse, que é o que chamamos de full stack, com a parte de visualização e também uma API.
+Normalmente nós temos ou uma API ou uma aplicação full stack. 
+Mas é perfeitamente normal ter os dois. 
+
+Então neste projeto teremos os dois somente para já reutilizar algum código que fizemos e etc. 
+Mas, via de regra, teremos isso separado, SEPARADO CÓDIFO DA API COM O CÓDIGO "FULLSTACK". 
+no exemplo, eu tenho as definições da minha rota de API junto com as definições das minhas rotas do sistema full stack.
+
+exemplo:
+
+Route::get('/', function () {
+    return view('auth.login');
+});
+
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth'])->name('dashboard');
+
+
+require __DIR__.'/auth.php';
+
+/** return response em json object - fora da autenticação*/
+Route::get('/api/series', function () {
+    return Series::all();
+});
+
+ Isso não é tão interessante. Além disso, se acessarmos aquele "app > Http > Kernel.php", temos alguns middlewares que são adicionados, por padrão, em todas as rotas que temos 
+ daquele arquivo web. no caso detalhes de cookies, de sessão e etc. 
+ Isso nós não utilizamos quando estamos falando de API, não é comum - não é que é impossível ou que não se utiliza, mas não é tão comum utilizarmos cookies quando estamos trabalhando 
+ com a API, não utilizamos sessões quando estamos trabalhando com a API, no caso exemplo jwt.
+
+Então não é interessante deixarmos as rotas da API dentro daquele arquivo de web.php. Quando eu volto em "routes", eu tenho um arquivo específico para definir rotas de API, 
+"routes > api.php". 
+De novo, se eu volto no meu "Kernel.php", tenho middlewares específicos já configurados.
+
+exemplo:
+protected $middlewareGroups = [
+    'web' => [
+        \App\Http\Middleware\EncryptCookies::class,
+        \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+        \Illuminate\Session\Middleware\StartSession::class,
+        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+        \App\Http\Middleware\VerifyCsrfToken::class,
+        \Illuminate\Routing\Middleware\SubstituteBindings::class,
+    ],
+
+    'api' => [
+        // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        'throttle:api',
+        \Illuminate\Routing\Middleware\SubstituteBindings::class,
+    ],
+];
+
+trazer essa rota de web.php - vou recortar daqui - e vou colar no arquivo api.php. Só que o que acontece? 
+Toda rota que for definida dentro desse arquivo api.php, ela já possui o prefixo /api. Então posso simplesmente remover o /api daqui.
+
+auth.php
+
+use App\Models\Series;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| is assigned the "api" middleware group. Enjoy building your API!
+|
+*/
+
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return $request->user();
+});
+
+
+/** return response em json object - fora da autenticação*/
+Route::get('/series', function () {
+    return Series::all();
+});
+
+então eu estou definindo uma rota /series em api.php e outra rota /series em auth.php. Mas, na verdade, elas são rotas diferentes. 
+Em auth.php é somente /series mesmo, em api.php, com eu estou no arquivo de API, será /api/series. 
+Então essa função será executada. Quando eu atualizo na aplicação, tenho o mesmo resultado.
+
+-
+
+Como eu comentado, vamos utilizar uma ferramenta externa por alguns motivos. Primeiro para visualizar de forma mais agradável e, segundo, porque com o navegador 
+não conseguiríamos, de forma simples, enviar informações para uma API, mas vamos ver isso mais frente.
+
+Existem várias ferramentas para trabalharmos com APIs, fazer testes de APIs, e uma das mais famosas é o Postman.
+
+Com a conta criada, deixa eu abrir na minha conta que já está logada, você vai visualizar uma tela parecida com essa. O Postman trabalha com um conceito chamado *workspaces *, 
+que são áreas de trabalho, vamos dizer assim.
+
+Então, por padrão, você tem um workspace e é nele que vamos trabalhar, que é o my workspace, eu também só tenho um. O que vamos fazer? 
+Caso você crie a sua conta agora, esse menu todo à direita estará vazio, porque isso são coleções de requests, coleções de requisições.
+nós podemos criar uma coleção para o nosso treinamento para ter todas as requisições dentro dessa coleção. 
+
+Nós vamos criar a requisição. Posso copiar a URL e colar no "GET" do Postman, é a URL para o sistema. Antes de enviar essa requisição, embaixo você deve 
+ter notado que tem o botão "Auto-select Agent". Se você clicar nele, existem alguns agentes que o Postman pode utilizar.
+Ele pode utilizar o próprio navegador para fazer uma requisição, um sistema de cloud que o próprio Postman tem ou um agente desktop - você baixa um serviço que ele fornece, esse 
+serviço fica rodando, o Postman se conecta a esse serviço para poder fazer algumas coisas a mais, porque o agente do navegador tem algumas limitações.
+Quando você fizer a requisição clicando no botão "Send" do lado direito da tela, a resposta já vem pronta. Então repare que ela já vem bem mais amigável. 
+Esse JSON já vem formatado porque o Postman identificou, naquele cabeçalho da resposta, que isso é um JSON, ele já marcou e veio formatado. Ou seja, ele veio separado o 
+array do objeto, veio com highlight para visualizarmos as separações do que é uma chave e o que é um valor.
+
+já sabemos como consumir essa API, vamos conversar sobre como podemos representar todo o sistema sem ter, por exemplo, formulários, links onde eu posso clicar e ir para outra tela,
+como eu poderia, por exemplo, enviar um dado, enviar uma série para cadastrar no meu banco. Nós vamos falar sobre tudo isso no próximo capítulo.
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Aprendemos o que é uma API
+Vimos motivos para termos uma API
+Criamos nosso primeiro endpoint com Laravel
+Conhecemos o Postman
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+TOP 02
+
+em uma aplicação normal, uma aplicação full stack, se quero inserir um dado, eu crio um formulário, o usuário vai preencher os dados nesse formulário e esses dados vão chegar em 
+uma outra requisição, nessa requisição eu armazeno os dados e faço tudo o que tenho que fazer.
+omo isso é feito em uma API? A nossa API precisa receber esses dados. Só que a nossa API não vai criar esse formulário, talvez esse formulário nem exista. Eu posso ter uma aplicação
+móvel que tenha um botão que já cria uma série automaticamente, por exemplo, sem o usuário preencher nada.
+Então não vamos nos preocupar com como esses dados serão preenchidos, mas precisamos nos preocupar em como eles vão chegar. Existem diversas coisas que podemos começar a nos preocupar 
+para fazer esse tipo de coisa, para planejar essa criação de API. A primeira coisa que precisamos pensar é em recursos.
+Quando alguém for inserir uma série em um banco de dados, por exemplo, utilizando a nossa API, essa pessoa vai trabalhar com um recurso chamado "Série". 
+Então nós precisamos separar, na aplicação, alguns recursos. No caso, nós temos, por exemplo, "Séries" e, se eu quiser acessar uma série em específico, podemos acessar essa série 
+informando o id dela.
+
+A mesma coisa o recurso de episódios. Caso precise de um episódio para, por exemplo, marcá-lo como assistido ou não, eu acesso informando o id na rota. 
+Então quando falamos de uma API, principalmente utilizando algum padrão interessante, falamos bastante sobre recursos. Nossa série é um recurso, episódio é outro recurso, temporada 
+pode ser um recurso e assim em diante.
+
+por exemplo, tenho vários cursos, esses cursos são feitos por alunos, alunos fazem vários cursos. Então eu posso ter um recurso para cursos, um recurso para alunos e assim em diante. 
+Como eu posso manipular esses recursos? O que eu consigo fazer? Por exemplo, eu tenho uma rota, uma URL, um endpoint, para "/series".
+
+Para isso podemos utilizar os verbos HTTP. O HTTP fornece tudo o que é necessário para conseguirmos demonstrar a nossa intenção ao manipular um recurso. Por exemplo, 
+utilizando os verbos HTTP, se faço uma requisição para "/series" utilizando o verbo get, que é o que fizemos até agora, a intenção é buscar séries.
+
+**  Se eu faço com verbo get, que tem a intenção de trazer dados, de buscar dados, uma requisição para "/series/id", quero trazer as informações de uma série específica. 
+** para enviar dados, utilizo o verbo post.
+** se precisar atualizar uma série, entramos em métodos dos topos put ou o patch, o put atualizo uma série por completo, ou seja, envio todos os dados de uma série put.
+** se preciar atualizar somente marcar o episódio como assistido, é mais comum utilizarmos o verbo patch, 
+
+Existe essa sutil diferença entre put e patch e, na maioria das vezes, você vai ver a implementação somente do método put. Você envia todas as informações, o sistema só 
+atualiza tudo porque é mais simples.
+
+** se precisar deletar, o delete, que serve, como você deve imaginar, para remover um recurso. No caso, remover a série com o id informado. 
+Então repare que somente utilizando os verbos HTTP nós já conseguimos demonstrar a nossa intenção, o que queremos fazer com aquele recurso.
+
+precisamos informar qual formato, por exemplo, vamos utilizar para enviar um dado, para receber um dado. Para isso utilizamos os cabeçalhos. "Content-Type: application/json".
+
+** Além disso tudo, isso é praticamente todo o básico que precisamos conhecer para criar uma API, podemos ter conceitos mais avançados.
+A sigla HATEOAS, que é até difícil falar, significa hypermedia as the engine of application state, que é um nome super grande e complexo, mas que é basicamente informar que 
+temos hypermedia como motor da aplicação, de estado da aplicação. Posso enviar coisas além de texto, por exemplo um link, uma URL para a pessoa fazer uma outra requisição e assim 
+em diante.
+Quando estou trabalhando com uma API, eu preciso me preocupar com algumas coisas a mais. Por quê? Se eu estou trabalhando com uma API, se estou separando o servidor do cliente, 
+quer dizer que provavelmente terei vários clientes acessando essa mesma API. 
+Então precisamos garantir que isso seja feito sem estado no lado da API e que o cliente consiga armazenar, de alguma forma, as suas credenciais, por exemplo
+Justamente essa parte de trabalhar sem estado, stateless, entra em um ponto de escalabilidade. Se você quiser replicar sua API em vários servidores, por exemplo, isso é uma 
+preocupação muito comum.
+Como faremos para não armazenar sessões, por exemplo, em um servidor? 
+De novo entramos nesse ponto de stateless. Enfim, existem infinitos conceitos bem mais avançados quando falamos de API. Repare que citei padrões bem específicos, tem um nome
+muito específico. é chamado de Rest, ou representational state transfer, transferência de estado representacional.
+Óbvio que não, isso tudo é chamado de Rest, ou representational state transfer, transferência de estado representacional. Esse nome complexo basicamente quer que quando criamos uma 
+API utilizando o padrão Rest, significa que nós estamos transferindo estado de recurso, é isso.
+
+Tudo isso que falei faz parte do padrão Rest. Existem outros padrões quando trabalhamos com APIs, padrões legados como o soap, por exemplo, e padrões até mais recentes, como o GRPC, 
+mas o Rest ainda é o mais comum, o mais difundido. 
+
+-
+
+criado o método resource, que já cria várias rotas para um mesmo controller
+Route::apiResource(). A diferença é que ele não vai criar, por exemplo, aquela rota que exibe um formulário, aquela de create, aquela de visualizar os detalhes para editar uma série, 
+um recurso. Então ele vai remover essas duas URLs, que não utilizamos em APIs, e vai criar todas as outras como já conhecemos.
+ntão Route::apiResource() será para (url: '/series',, utilizando SeriesController, vindo no namespace correto, que é o de API. Dessa forma já crio todas as rotas de uma vez só. 
+Conforme formos acessando, nós criamos os métodos. Vamos então criar aquele método store.
+Em "app > Http > Controllers > Api > SeriesController", public function store(). Precisaremos receber uma requisição. Será que posso receber aquele (SeriesFormRequest $request);?
+Vamos ver o que ele tem de validação. Ele espera receber um nome, ou seja, é obrigatório esse nome, e precisa ter dois caracteres.
+Então não muda nada na requisição que eu recebo de um formulário ou, no caso, de um corpo de uma API, que virá com um formato JSON. As regras são as mesmas, então vou utilizar esse 
+SeriesFormRequest sem problema nenhum. "Deveríamos então remover esse form e chamar somente de SeriesRequest?".
+
+/**
+    * Get the validation rules that apply to the request.
+    *
+    * @return array<string, mixed>
+    */
+public function rules()
+{
+    return [
+        'nome' => 'required|min:4',
+        'seasonQty'=> 'required',
+        'episodesPerSeason' => 'required'
+    ];
+}
+
+se você se lembra bem, quando fizemos com esses dados vindos de um formulário, nós recebemos um token de CSRF. Aqui não precisamos disso, porque uma API sempre recebe as requisições 
+de outro local, então não teremos essa verificação
+
+** Eu vou criar uma outra requisição]Vou copiar a URL "http://localhost:8000/api/series" da aba "Buscar Séries" e colar na nova aba que acabamos de criar. Ela será do tipo "POST", 
+ou seja, não é mais uma requisição do tipo get, e ela terá um corpo, vamos selecionar "body", ou seja, eu vou enviar dados no corpo dessa requisição.
+ós vamos selecionar esse formato "Raw", cru, esse formato puro, onde eu poderia digitar, na minha requisição no Postman, qualquer coisa.
+ó que vou informar que esse formato é JSON, selecionando "Text" que aparece após o "GraphQL" e escolhendo a opção "JSON", ou seja, ele já vai me dar alguma ajuda para formatar esse JSON,
+inclusive adiciona nos cabeçalhos, vai adicionar quando eu enviar, que é um JSON que estamos enviando.
+
+{
+    "nome": "Série-API",
+}
+
+ao usar dd(Series::create($request->all())); dentro do metodo store no controlador. o retornando no Postman "Preview"
+
+controller:
+
+public function store(SeriesFormRequestCreate $request)
+{
+    Series::create($request->all());
+    
+    return response()
+    ->json(Series::create($request->all()), 201);
+}
+
+Só que agora eu não vou redirecionar o usuário para lugar nenhum, não vou mandar ele de volta para nenhum lugar. O que eu vou fazer é informar para o usuário que foi criado.
+Nós temos esse método json que já responde algo como JSON. Isso não é necessário, como vimos, o Laravel já sabe parsear algo como JSON, mas se eu quiser ser mais específico, mais 
+explícito, isso é interessante. Para que estou utilizando esse método e não simplesmente retornando a série direto?
+Porque quero informar um status do código HTTP diferente. Vou informar o código HTTP como segundo parâmetro. Ao invés de 200, será um 201, all()), status:201);. 
+Esse 201 significa created.
+Então vamos no Postman, finalmente criar essa série. Quando eu envio a requisição selecionando o botão "Send" no canto superior direito da tela, ele manda - deixa eu voltar 
+para o Pretty em "Body", ele responde com o id gerado.
+Se eu acessar a minha requisição de "Buscar séries" no Postman, teremos como resposta o Lost também. Obviamente ele foi sem a capa, sem a imagem.
+
+** Na verdade, vou deixar um "Para Saber Mais" falando sobre imagens quando estamos trabalhando com APIs - na verdade, arquivos no geral. 
+Esse é um assunto bastante complexo, existem algumas alternativas. Por exemplo, posso ter um endpoint específico para receber arquivos - por exemplo, no corpo, ao invés de mandar um JSON,
+eu mandaria um binário. Porque um arquivo posso enviar no formato JSON, só que isso seria bastante desperdício de espaço, de recurso e de banda. Então temos um endpoint específico para
+receber arquivos, e esse endpoint não salva no banco, ele salva o arquivo em algum lugar e devolve, na resposta, o caminho desse arquivo. Depois mandaríamos, nesse post de série,
+o caminho dessa imagem.
+mandaria o cover somente com um caminho que já fizemos o upload. Essa é uma abordagem. Para mandar como JSON, teria que utilizar um base64. Nós transformaríamos essa imagem, esse 
+arquivo, em uma string e essa string nós enviaríamos. 
+só que assim perdemos a possibilidade de comprimir esse arquivo para fazer a requisição, o processamento disso é mais demorado, porque eu preciso decodificar.
+Então isso não é tão interessante se precisarmos de performance. Mas se quero praticidade, é uma ótima escolha. Existem outras abordagens, mas essas são as principais. Eu vou deixar um 
+"Para Saber Mais" 
+
+-
+
+bucar detalhes de um śerie especifica
+Mas antes, foi usado no exemplo anterior o json(Series::create($request->all()) em SeriesController ao invés de utilizar aquele nosso repositórios que já temos, que criar as temporadas, 
+os episódios e etc.
+como public function __construct(private SeriesRepository $SeriesRepository). 
+Salvei na propriedade, e eu terei no store(), o $this_>seriesRepository->add() a partir deste ($request).
+Com isso eu não preciso mais do Series::create, eu posso trazer para cá, ->json($this->seriesRepository->add($request)), 201);.
+
+public function __construct(private EloquentSeriesRepository $seriesRepository) 
+{
+    $this->repository = $seriesRepository;
+}
+
+public function index() 
+{
+    return Series::all();
+}
+
+public function store(SeriesFormRequestCreate $request)
+{
+    /** teste de retorno sem o uso do repository series */
+    // Series::create($request->all());
+
+    // return response()
+    // ->json(Series::create($request->all()), 201);
+
+    return response()->json($this->seriesRepository->add($request), 201);
+}
+
+dessa forma funcionado:
+
+class SeriesController extends Controller
+{
+    public function __construct(private EloquentSeriesRepository $seriesRepository) 
+    {
+        $this->repository = $seriesRepository;
+    }
+
+    public function index() 
+    {
+        return Series::all();
+    }
+
+    public function store(SeriesFormRequestCreate $request)
+    {
+        return response()
+        ->json($this->seriesRepository->add($request), 201);
+    }
+}
+
+
+** testando -  Eu vou chamar de outra série outra, "nome": "série api - teste capitalize". Esta série, ela terá a "seasonsQtdy": 1, serão 1 temporadas.
+{
+    "nome": "série api - teste capitalize",
+    "seasonQty": 1,
+    "episodesPerSeason": 1
+}
+
+Em "episodesPerSeason": 1, serão 1 episódio por temporada. Só isso, quando selecionar o botão send, ele traz os dados da série que foi criada, mas também traz os dados da temporada.
+O que acontece? 
+Por que ele traz esses dados? 
+Porque quando estamos inserindo, utilizando o nosso Eloquent series repository, acessamos as temporadas dessa série, que já inserimos. 
+
+public function add(SeriesFormRequestCreate $request): Series
+{
+    return DB::transaction(function () use ($request) {
+    
+        $request['nome'] = ucwords(strtolower($request['nome'])); 
+        // $serie = Series::create($request->all());
+        $serie = Series::create([
+            'nome' => $request->nome,
+            'cover' => $request->coverPath,
+        ]);
+
+        $seasons = [];
+        for ($s=1; $s <= $request->seasonQty; $s++) {
+            $seasons[] = [
+                'series_id' => $serie->id,
+                'number' => $s,
+                'created_at' => $serie->created_at,
+                'updated_at' => $serie->updated_at
+            ];
+        }
+
+        /** bulk insert */
+        Season::insert($seasons);
+
+        $episodes = [];
+        foreach ($serie->seasons as $season) {
+            for ($e=1; $e <= $request->episodesPerSeason; $e++) {
+                $episodes[] = [
+                    'season_id' => $season->id,
+                    'number' => $e,
+                ];
+            }
+        }
+
+        /** bulk insert */
+        Episode::insert($episodes);
+
+        return $serie;
+    });
+
+}
+
+Por isso que isso, $serie->seasons, já fica carregado na nossa série e então já é enviado para a resposta. Eu não vejo nenhum problema nisso, então eu vou manter. 
+Mas, se isso incomodar em algum momento, podemos retirar esse relacionamento sem problema nenhum. 
+
+{
+    "nome": "Série Api - Teste Capitalize",
+    "cover": null,
+    "updated_at": "2022-09-10T15:00:47.000000Z",
+    "created_at": "2022-09-10T15:00:47.000000Z",
+    "id": 93,
+    "seasons": [
+        {
+            "id": 241,
+            "number": 1,
+            "series_id": 93,
+            "created_at": "2022-09-10T15:00:47.000000Z",
+            "updated_at": "2022-09-10T15:00:47.000000Z"
+        }
+    ]
+}
+
+Continuando, agora vamos efetivamente buscar uma única série, vamos buscar uma série específica. Por exemplo, essa série que acabamos de criar, com o id 93.
+Em vez de vir no Postman e buscar todas e séries encontradas com o id 93, vou criar uma nova requisição para "/series/93" selecionando o mais ("+") na parte superior 
+direita da tela, que será o id. 
+Quando eu acessar esse endereço selecionando o botão "Send" do canto superior direito do Postman, eu tenho, obviamente, um erro, porque eu tenho a rota definida,
+mas não tem o método, então ele nos mostra que esse método show não existe.
+
+Só que caso eu não tivesse essa mensagem de erro, ou caso simplesmente queira ver todas as rotas que estão definidas, como eu poderia fazer, já que eu estou utilizando esse ApiResource,
+eu não estou definindo rota por rota? 
+Uma forma de visualizarmos isso é através do comando 
+# php artisan route::list.
+
+
+vamos criar o método show em SeriesController , public function show(Series $series) e simplesmente retorna essa série, return $series.
+
+public function show(Series $series)
+{
+    return $series;
+}
+
+Simples assim. Então quando acesso no Postman clicando no botão "Send", tenho no corpo os dados da série.
+http://localhost:8000/api/series/93
+
+{
+    "id": 93,
+    "nome": "Série Api - Teste Capitalize",
+    "created_at": "2022-09-10T15:00:47.000000Z",
+    "updated_at": "2022-09-10T15:00:47.000000Z",
+    "cover": null
+}
+
+E se eu quisesse já retornar todas as temporadas e os episódios?"
+
+show (Series $serie), posso receber o id dessa série, show(int $series) , e fazer um Series::with(relations: 'seasons')->get();, por exemplo.
+
+public function show(int $series)
+{
+    $series = Series::with('seasons')->find($series);
+    return response()
+    ->json($series, 200);
+}
+
+Isso vai nos retornar todas as séries, $series = Series::with(relations: 'seasons')->get();, com as suas temporadas. 
+
+{
+    "id": 93,
+    "nome": "Série Api - Teste Capitalize",
+    "created_at": "2022-09-10T15:00:47.000000Z",
+    "updated_at": "2022-09-10T15:00:47.000000Z",
+    "cover": null,
+    "seasons": [
+        {
+            "id": 241,
+            "number": 1,
+            "series_id": 93,
+            "created_at": "2022-09-10T15:00:47.000000Z",
+            "updated_at": "2022-09-10T15:00:47.000000Z"
+        }
+    ]
+}
+
+----------------------------------------------------------------
+caso queria trazer todas as series
+
+public function show(int $series) 
+{
+$series = Series::with('seasons')->get();
+return $series;
+}
+-----------------------------------------------------------------
+
+Mas eu ainda não tenho os episódios. Quando tenho esses relacionamentos encadeados, eu posso também utilizar o eager loading dessa forma, com o (relations: 'seasons.episodes').
+Com isso, ele vai trazer, de cada série, de cada temporada também, os seus episódios
+
+public function show(int $series)
+{
+    $series = Series::with('seasons.episodes')->find($series);
+    return response()
+    ->json($series, 200);
+}
+
+{
+    "id": 93,
+    "nome": "Série Api - Teste Capitalize",
+    "created_at": "2022-09-10T15:00:47.000000Z",
+    "updated_at": "2022-09-10T15:00:47.000000Z",
+    "cover": null,
+    "seasons": [
+        {
+            "id": 241,
+            "number": 1,
+            "series_id": 93,
+            "created_at": "2022-09-10T15:00:47.000000Z",
+            "updated_at": "2022-09-10T15:00:47.000000Z",
+            "episodes": [
+                {
+                    "id": 1549,
+                    "number": 1,
+                    "season_id": 241,
+                    "watched": 0
+                }
+            ]
+        }
+    ]
+}
+
+
+
+ou fazer:
+
+public function show(int $series)
+{
+    $series = Series::whereId($series)->with('seasons.episodes')->get();
+    return response()
+    ->json($series, 200);
+}
+
+[
+    {
+        "id": 93,
+        "nome": "Série Api - Teste Capitalize",
+        "created_at": "2022-09-10T15:00:47.000000Z",
+        "updated_at": "2022-09-10T15:00:47.000000Z",
+        "cover": null,
+        "seasons": [
+            {
+                "id": 241,
+                "number": 1,
+                "series_id": 93,
+                "created_at": "2022-09-10T15:00:47.000000Z",
+                "updated_at": "2022-09-10T15:00:47.000000Z",
+                "episodes": [
+                    {
+                        "id": 1549,
+                        "number": 1,
+                        "season_id": 241,
+                        "watched": 0
+                    }
+                ]
+            }
+        ]
+    }
+]
+
+Só que eu estou buscando ainda uma coleção. Repare que eu estou trazendo um array, e eu não quero esse array, porque eu só tenho um elemento sempre. Então ao invés de utilizar 
+o método ->get() eu posso utilizar o método ->first().
+
+public function show(int $series)
+{
+    $series = Series::whereId($series)->with('seasons.episodes')->get();
+    return response()
+    ->json($series, 200);
+}
+
+{
+    "id": 93,
+    "nome": "Série Api - Teste Capitalize",
+    "created_at": "2022-09-10T15:00:47.000000Z",
+    "updated_at": "2022-09-10T15:00:47.000000Z",
+    "cover": null,
+    "seasons": [
+        {
+            "id": 241,
+            "number": 1,
+            "series_id": 93,
+            "created_at": "2022-09-10T15:00:47.000000Z",
+            "updated_at": "2022-09-10T15:00:47.000000Z",
+            "episodes": [
+                {
+                    "id": 1549,
+                    "number": 1,
+                    "season_id": 241,
+                    "watched": 0
+                }
+            ]
+        }
+    ]
+}
+
+mas no caso seguindo a regra de negocio do projeto atual
+http://localhost:8000/api/series/93
+
+public function show(int $series)
+{
+    $series = Series::whereId($series)->first();
+    return response()
+    ->json($series, 200);
+}
+
+servido os dos da api
+
+-
+
+ A rota de atualização ele manda para "series.update", ou seja, o método é o update, e a de remoção é em "series.destroy". 
+ Vamos criar essas duas rotas em SeriesController . Primeiro o update, ela espera na URL, um parâmetro que é a série, ou seja, vai receber o id da série.
+ E espera também o corpo da requisição, podemos inclusive utilizar aquele que tem uma certa validação, public function update(Series $serie, SeriesFormRequestUpdate $request). 
+ Agora o destroy, public function destroy(), ele espera somente, na URL, qual série vamos remover, (Series $series). Simples assim.
+
+ ** update:
+tem a série, já busquei ela do banco de dados, então posso fazer um $series->fill(), com todos os dados do request, 
+($request->all()), que, no nosso caso, será somente o nome. 
+Existe uma forma mais performática para eu não precisar buscar a série para depois preencher os novos campos, mas tudo bem, eu não estou pensando tanto em performance agora.
+Em public function update() posso fazer o $series->save();. Armazenei essa série, posso retorna-la, return $series;
+
+public function update(Series $series, SeriesFormRequestUpdate $request) 
+{
+    $series->fill($request->all());
+    $series->save();
+
+    return $series;
+}
+
+ou
+
+ public function update(Series $series, SeriesFormRequestUpdate $request) 
+{
+    $series->fill($request->all());
+    $series->save();
+
+    return response()
+    ->json([
+        'status' => 204,
+        'message' => 'Serie atualizado com Sucesso!',
+        'series' => $series
+    ]);
+}
+
+ou
+
+public function update(Series $series, SeriesFormRequestUpdate $request) 
+{
+    $series = $this->seriesRepository->update($series, $request);
+    return response()
+    ->json([
+        'status' => 204,
+        'message' => "Atualizado Série por ID: {$series->id} com Sucesso!",
+        'series' => $series
+    ]);
+}
+
+ou
+
+public function update(Series $series, Request $request) 
+{
+    $validator = Validator::make($request->all(),[
+        'nome' => 'required|min:4',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'validate_err' => $validator->messages(),
+        ]);
+    } 
+    
+    $series = $this->seriesRepository->update($request, $series);
+    return response()
+    ->json([
+        'status' => 204,
+        'message' => "Atualizado Série por ID: {$series->id} com Sucesso!",
+        'series' => $series
+    ]);
+}
+
+public function destroy(int $serie) 
+{
+    Series::destroy($serie);
+
+    /** retorna com a resposta vazia com status 204 */
+    return response()->noContent();
+}
+
+
+
+ou criar uma nova requisição no Postman selecionando o sinal de mais ("+") na parte superior, essa requisição será do tipo "PUT", 
+será para "http://localhost:8000/api/series/16", que é o id. Ou seja, a minha API com o id 16, que é a minha série.
+
+Eu vou passar um corpo - "body". Esse corpo estará em JSON, então, em "Text" do lado direito de "GraphQL" vamos escolher a opção "JSON",
+que vai ter somente o nome. O nome será "nome": "Outra". 
+
+http://localhost:8000/api/series/16
+
+{
+    "nome": "Outra"
+}
+
+
+Agora vamos implementar a de remover uma série. Deixa eu copiar essa URL "http://localhost:8000/api/series/16", selecionar a função "DELETE". É essa a requisição, 
+se eu enviar, obviamente a nossa série não será removida ainda porque não tem nada no controller. Eu preciso implementar o método destroy. Só que o que acontece?
+Repare o que eu fiz: eu tenho duas opções para remover uma série, como já vimos anteriormente. Quando tenho a model, posso chamar o método $series->delete(). 
+Só que, para isso, o Laravel vai no banco de dados, vai buscar a série e depois remover.
+Ou então eu posso somente receber o id e a partir desse id, chamar o método Series::destroy(), passando esse id, ($series);. Com isso ele vai remover a série. 
+Agora, o que eu retorno aqui? Qual resposta eu dou neste caso? Eu posso responder com aquele 204, de no content, ou seja, uma resposta vazia. Eu poderia 
+fazer, por exemplo, return response(content ' ', status:204);, ou seja, uma resposta vazia com o status 204. 
+Mas o Laravel já tem um método para isso, que é o método return response()->noContent();. Ele faz exatamente aquilo, manda uma resposta vazia com o status 204.
+Só que teremos um problema com o Postman, porque ele espera receber uma resposta diferente. Então eu vou dizer, nos meus cabeçalhos da requisição em "Headers",
+que aceito uma resposta do tipo "application/json". 
+
+Com isso eu sei que estou trabalhando com uma API, basicamente. Super simplificando: estou mandando, na requisição, essa informação a mais e o Postman não vai reclamar que essa 
+resposta está vazia.
+]Isso é por causa de um bug, um problema que o próprio Postman tem. Se você estiver, por exemplo, fazendo uma requisição do seu aplicativo, você não precisa, necessariamente, 
+enviar esse cabeçalho para a requisição funcionar. 
+agora, falando sobre esse cabeçalho, vamos tirar um tempo para entendermos o que está acontecendo. Imagine que eu queira criar uma série. Eu mando, no nome da série, somente uma letra.
+Ou seja, isso não passa na nossa validação.
+O Postman está mandando essa requisição e quando o Laravel recebe a requisição, ele não identifica que é uma requisição para uma API, que espera um JSON, esse tipo de coisa.
+Ele está mandando a requisição igual a um navegador mandaria, sem aquele "Accept application/json". Então, neste ponto, é um detalhe não só do Postman, mas do Laravel como um todo.
+Se tenho alguma validação no meu controller, na minha requisição, preciso informar corretamente qual é o tipo dessa requisição para que a resposta da avaliação seja correta também.
+Então nos cabeçalhos do Postman, eu vou informar: Laravel, eu aceito essa resposta como JSON. Agora o Laravel vai pegar aquela validação e devolver como JSON também.
+ntão repare que ele tem aqui os erros e tem uma mensagem. Dessa forma conseguimos trabalhar com a validação sem aqueles problemas que estávamos tendo de ser redirecionados para a 
+tela de login, o que não faz o menor sentido em uma API. Ou seja, precisamos usar o HTTP corretamente. Basicamente é isso o que precisamos fazer.
+na resposta, se é um conteúdo em JSON, adicione o content-type; na requisição, eu espero que a resposta seja um JSON, adicione o accept. 
+Com isso temos o nosso CRUD, então o create, os dois read, eu tenho o update e eu tenho o delete. Com isso eu já tenho uma API Rest completa, com o CRUD.
+
+por baixo dos panos comando fill()
+
+public funciton update(int $series, SeriesFormRequest $request)
+{
+    Series::where(‘id’, $series)->update($request->all());
+    // retorno de uma resposta que não contenha a série, já que não fizemos um `SELECT` 
+}
