@@ -29,7 +29,7 @@ class EmailUsersAboutSeriesCreated implements ShouldQueue
      */
     public function handle(SeriesCreatedEvent $event)
     {
-        dd($event);
+        // dd($event);
         $userList = User::all();
         foreach ($userList as $index => $user) {
             /** envio de email */

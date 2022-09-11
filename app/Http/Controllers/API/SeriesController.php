@@ -54,8 +54,16 @@ class SeriesController extends Controller
         ]);
     }
 
-    public function update(Series $series, SeriesFormRequestUpdate $request) 
+    public function update(int $series, SeriesFormRequestUpdate $request) 
     {
+        $series = Series::whereId($series)->first();
+        if($series === null) {
+            return response()->json([
+                'status' => 404,
+                'message' => "Serie não Encontrada",
+            ]);
+        }
+
         $series = $this->seriesRepository->update($request, $series);
         return response()
         ->json([
