@@ -743,3 +743,187 @@ public funciton update(int $series, SeriesFormRequest $request)
     Series::where(‘id’, $series)->update($request->all());
     // retorno de uma resposta que não contenha a série, já que não fizemos um `SELECT` 
 }
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Conhecemos o padrão REST
+Usamos os verbos HTTP corretos para criar um CRUD
+Discutimos sobre códigos de retorno
+Vimos como retornar tipos de respostas diferentes com Laravel
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+TOP 03
+
+
+Vamos no Postman, na aba "Buscar Séries", esse código não vai mudar nada. Só que, baseado em uma série, eu quero pegar uma série específica, 
+ou seja, "/2/seasons". Com isso eu espero ver todas as temporadas de Grey's Anatomy.
+Quando eu acessar selecionando o botão "Send" no canto superior direito do Potman, perfeito, temos no resultado todas as temporadas de Grey's Anatomy. No caso, nós temos 18 temporadas
+cadastradas. Com isso, conseguimos acessar um recurso baseado em outro recurso. 
+
+Route:
+
+Route::get('/series{series}/season'}', function (\APP\Models\Series $series) {
+    return $series->seasons;
+}
+
+ou de forma mais completa com os respective espisodios.
+
+controller:
+
+class SeasonsController extends Controller
+{
+    public function index(Series $series)
+    {
+        return response()
+        ->json([
+            'status' => 200,
+            'message' => "Temporada(s)/Episodio(s) Encontrada(s) por Série Id: {$series->id} com Sucesso!",
+            'seasons' => $series->seasons()->with('episodes')->get()
+        ]);
+    }
+}
+
+http://localhost:8000/api/series/1/seasons
+
+Então vamos parar um pouco para pensar nisso: o que nós estamos fazendo, na prática, é bastante simples, estamos pegando um relacionamento - um relacionamento que é até simples de
+implementar.
+Só que a parte teórica tem alguma coisa envolvida. O que acontece é: nós estamos buscando um recurso que possui relacionamento com outro recurso específico. Então estamos
+buscando uma coleção de temporadas que são relacionadas com uma série específica. Esse é o conceito de sub-recursos.
+Quando trabalhamos com restful APIs, ou com APIs que são restful, que implementam o padrão Rest, nós podemos - e muitas vezes têm - sub-recursos. Esse é um caso bastante 
+simples de como podemos utilizar sub-recursos. Esse padrão na URL, nós poderíamos muito bem colocar algo como season 2 da série 2.
+Só que isso nós não olhamos e entendemos que estamos buscando as temporadas da série 2, parece que estou buscando a segunda temporada de alguma coisa. 
+Por isso nós seguimos esse padrão, o recurso pai, "series", com a sua identificação, "/2", e depois o sub-recurso, "/seasons". Essa é a ideia de se utilizar sub-recursos.
+
+** O que podemos fazer para trazer todos os episódios de uma série? 
+Vamos criar essa nova rota, então uma rota que vou buscar Route::get(url: 'series/, baseado em alguma série, /{series}/episodes'. 
+Isso, de novo, eu poderia ter um controller de episódios, mas vou implementar direto.
+
+/** return todos os episodios de um a série */
+Route::get('/series/{series}/episodes', function (\App\Models\Series $series) {
+    return $series->episodes;
+});
+
+Eu quero acessar direto os episódios de uma série, como posso fazer isso? 
+Como posso implementar esse relacionamento? 
+Como conversamos no treinamento onde falamos sobre relacionamentos, existe um tipo de relacionamento chamado through, através, que é exatamente o que podemos implementar.
+Eu posso ter, por exemplo, um relacionamento com episodes, public function episodes(), e eu posso informar que essa série tem muitos episódios através de temporadas, 
+return $this->hasManyThrough(). Ou seja, eu tenho muitos episódios baseado no seasons, nas temporadas, (related: Episodes::class, through :Seasons::class).
+Com esse hasManyThrough, o que o Eloquent vai fazer é: quando eu tentar acessar os episódios de uma série, ele vai ver todas as temporadas dessa série e, para cada temporada, 
+todos os episódios dessa série, e retornar como uma coleção. 
+
+Model Serie:
+
+public function episodes() 
+{
+    return $this->hasManyThrough(related: Episode::class, through: Season::class);
+}
+
+http://localhost:8000/api/series/1/episodes
+
+Dessa forma, se eu buscar todos os episódios dessa série no Postman selecionando o botão "Send" no canto superior direito, eu tenho todos os episódios dessa série no corpo, 
+independente da temporada. 
+
+-
+
+O verbo put e o verbo patch, eles têm uma funcionalidade semelhante, mas não são idênticos.
+O verbo put, ele deve ser utilizado para representar um recurso como um todo.
+Caso esse recurso que estamos transferindo já exista, essa nova representação, ou seja, tudo o que eu mandei pelo Postman, vai substituir o recurso já no banco de dados. 
+Agora, caso ele não exista ainda, ele pode ser criado, ou seja, vou criar um novo recurso.
+Um exemplo de outro uso incorreto do put: imagine que tenho uma API de usuários - vamos lá, eu tenho o meu "/users" no Postman. 
+Quando eu faço um post para "/users", eu preciso enviar as informações completas deste usuário.
+Ou seja, preciso mandar o nome, por exemplo, Vinícius, preciso mandar um e-mail, "email@exampel.com" , etc., eu mando as informações. 
+Caso eu queira atualizar, por exemplo, quero atualizar somente o e-mail, o que muita gente implementa é isso, faz um put e manda somente o e-mail.
+
+Se o verbo put for corretamente implementado, o que vai acontecer é que a partir de agora, o usuário que eu alterei, o de id 1, por exemplo, ele só terá o e-mail, ele não tem mais nome,
+porque eu mandei uma nova representação dele e essa é a representação, somente o e-mail. Essa seria uma implementação correta de put.
+
+Para eu fazer isso, alterar somente um dado do recurso, eu teria que utilizar o patch. Por isso vamos utilizar o verbo patch para marcar um episódio como assistido, 
+porque eu não estou alterando o número dele, por exemplo. 
+
+
+No nosso verbo put no "Atualizar série" no menu do lado esquerdo da tela, eu estou mandando somente o nome, mas é só isso que uma série tem, essa é a representação de uma série.
+Então caso, vamos criar uma URL para patch de "/episodes/1". Esse episódio só terá o "watched": atualizado, só isso e nada, além disso. Vamos implementar, será uma implementação simples também. 
+
+http://localhost:8000/api/episodes/23
+
+alterar o 3 episodio da 2 temporda da serie 1
+
+implementar direto em api.php, sem criar um controller. Com o verbo patch para Route::patch(url:'/episodes/{episode}'.
+
+Route:
+
+Route::patch('/episodes/{episode}', [ApiEpisodesController::class, 'update']);
+
+controller:
+
+public function update(Request $request, Episode $episode) 
+{
+    $episode->watched = $request->watched;
+    $episode->save();
+
+    return response()
+    ->json([
+        'status' => 201,
+        'message' => "Marcado como visualizado(s) o(s) episódio(s) {$episode} com sucesso!",
+    ]);
+}
+
+
+-
+
+Vamos resolver esse problema de algumas formas diferentes. Então vamos pegar o meu episódio em "app > Models > Episode", quero utilizar uma forma diferente de acessar aquele meu tributo.
+Posso utilizar o que o Laravel chama de acessor. Nós temos na parte de documentação do Eloquent, o "Eloquent: Mutators & Casting" .
+Então isso é relacionado com model. Aqui nós podemos definir um acessor clicando em "Defining An Accessor", ou seja, um assessor, uma forma de acessar algum atributo. 
+Eu quero acessar o atributo watched, então essa última sintaxe é a que eu vou usar. Ela é relativamente complexa à primeira vista, então vamos passar a analisá-la rápido.
+imeiro vamos criar a função no projeto em Episode, que será o assessor, a forma de acessar o atributo watched. Sempre que tentar buscar watched é essa função que será chamada. 
+Repare que o Laravel não deixa ela como pública na documentação, então, por padrão, vamos deixar ela protegida também, protected function watched():.
+
+Ela retorna um : Attribute. Vamos ver de onde vem essa classe na documentação, que vem de "Illuminate\Database\Eloquent\Casts\Attribute", que foi exatamente de onde o
+PhpStorm importou para nós. 
+Então vamos lá, precisamos retornar um return Attribute::make(), ou então um return new Attribute(). Os dois são sinônimos, vamos dizer assim. Eu prefiro com essa última sintaxe.
+
+tenho dois possíveis parâmetros, um para recuperar o dado, que é o que chamamos de acessor, e outro para definir esses dados, que é o que chamamos de mutator. 
+É como se fossem getters e setters, inclusive são esses os nomes dos parâmetros. O primeiro parâmetro é get e o segundo é set.
+quiser definir só um, graças aos parâmetros nomeados do PHP, você pode definir só um. Mas vamos definir somente o get, vamos utilizar o parâmetro nomeado. Aqui eu posso definir uma função, inclusive pode ser uma função completa ou somente uma short closure, caso eu queira.
+Essa função só precisa retornar o que eu quero representar com esse atributo. Então vamos deixar um pouco mais claro: essa função será chamada sempre que eu tentar acessar o 
+atributo watched. Sempre que eu acessar para ler, essa função será chamada passando o watched por parâmetro. Então eu posso retornar ele como booleano,
+get: fn ($watched) => (bool) $watched.
+Porque se for o número 0, ele vai retornar falso, se for o número 1, ele vai retornar verdadeiro. Se eu voltar no Postman e tentar acessar de novo, agora já temos o verdadeiro e o falso.
+
+** Essa é uma forma de implementarmos. De novo, caso eu quisesse receber também, alterar a forma como isso é atribuído, ou seja, deixa eu explicar um pouco melhor.
+
+Deixa eu voltar para as rotas. Se quando eu fizesse esse código $episode->watched = 1;, se eu quiser executar alguma coisa e transformar esse 1 para booleano também, eu posso. 
+** Basta definir a função set: fn(). Aqui será o parâmetro que recebemos, ou seja, neste exemplo seria o número 1.
+
+Eu posso, de novo, fazer o cast, $watched) => (bool) $watched,. O que eu retornar nessa função será efetivamente armazenado no atributo. Dessa forma tenho o cast tanto na hora de 
+salvar quanto na hora de recuperar. Nós conseguimos implementar. Mais uma vez, isso não deve trazer nenhuma diferença, tenho esse meu cast implementado.
+
+protected function watched(): Attribute
+{
+    return new Attribute(
+        get: fn ($watched) => (bool) $watched,
+        set: fn ($watched) => (bool) $watched
+    );
+}
+
+Mas essa funcionalidade, esse mutator e acessor, deve ser utilizado quando realmente temos alguma regra. Por exemplo, se quero transformar todos os nomes das minhas séries em letra maiúscula, 
+ou adicionar um hashtag antes do número do episódio, para mostrar "#1", "#2". Para esse tipo de coisa nós utilizaríamos um acessor ou um mutator.
+
+** Mas para esse caso, só precisamos de um cast. Por isso posso vir em "Episode", remover isso tudo o que fizemos - repare, tudo o que eu estou fazendo é um typecast, ou seja, 
+eu estou fazendo uma mudança de tipos, pegando um inteiro e transformando em um booleano.
+Se é só isso que eu preciso, posso informar em class Episode o protected $casts = []. O que esse atributo, ele contem, qual é o valor dele? É um array associativo, 
+onde cada atributo é mapeado para algum tipo. Por exemplo, o atributo watched é mapeado para bool, ou boolean, que agora, honestamente, não me lembro, 'watched' => 'boolean'.
+Mas podemos ou testar e ver o que acontece - no Postman selecionado o botão "Send" na aba "Episódios de séries", funcionou, é boolean. Vamos ver se o => 'bool' também funcionaria. 
+
+model:
+
+protected $casts = [
+    'watched' => 'boolean',
+];
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Entendemos mais sobre como o Eloquent funciona
+Conhecemos o conceito de subrecursos
+Usamos o verbo PATCH para marcar episódios como assistidos
+Conhecemos o conceito de Accessors e Mutators
+Criamos um cast
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

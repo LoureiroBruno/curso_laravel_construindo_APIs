@@ -30,6 +30,11 @@ class Series extends Model
         return $this->hasMany(related: Season::class, foreignKey: 'series_id');
     }
 
+    public function episodes() 
+    {
+        return $this->hasManyThrough(related: Episode::class, through: Season::class);
+    }
+
     /**
      * The "booted" method of the model.
      *
